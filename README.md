@@ -1,1 +1,1 @@
-# TMA3084 Lab 05 Lesson 07 - Group G02
+# TMA3084 Lab 05 Lesson 07 - Group G02 - Aida Nazura (103132)
