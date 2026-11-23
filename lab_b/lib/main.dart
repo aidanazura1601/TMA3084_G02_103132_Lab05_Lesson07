@@ -43,8 +43,16 @@ class CarTablePage extends StatefulWidget {
 
 class _CarTablePageState extends State<CarTablePage> {
   final List<Car> _cars = List.of(initialCars);
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
   int? _sortColumnIndex;
   bool _sortAscending = true;
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _sort(
     int columnIndex,
@@ -58,8 +66,25 @@ class _CarTablePageState extends State<CarTablePage> {
     });
   }
 
+  void _onSearchChanged(String value) {
+    setState(() {
+      _query = value.trim().toLowerCase();
+    });
+  }
+
+  List<Car> get _visibleCars {
+    if (_query.isEmpty) {
+      return _cars;
+    }
+    return _cars
+        .where((car) => car.carMake.toLowerCase().contains(_query))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
+    final visibleCars = _visibleCars;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Car Price List'),
@@ -68,44 +93,78 @@ class _CarTablePageState extends State<CarTablePage> {
       ),
       body: SingleChildScrollView(
         child: Center(
-          child: DataTable(
-            sortColumnIndex: _sortColumnIndex,
-            sortAscending: _sortAscending,
-            columns: [
-              DataColumn(
-                label: const Text('Car Make'),
-                onSort: (index, ascending) => _sort(
-                  index,
-                  ascending,
-                  (a, b) => a.carMake.compareTo(b.carMake),
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SizedBox(
+                  width: 400,
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    decoration: InputDecoration(
+                      labelText: 'Search by Car Make',
+                      prefixIcon: const Icon(Icons.search),
+                      border: const OutlineInputBorder(),
+                      suffixIcon: _query.isEmpty
+                          ? null
+                          : IconButton(
+                              icon: const Icon(Icons.clear),
+                              tooltip: 'Clear search',
+                              onPressed: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            ),
+                    ),
+                  ),
                 ),
               ),
-              DataColumn(
-                label: const Text('Model'),
-                onSort: (index, ascending) => _sort(
-                  index,
-                  ascending,
-                  (a, b) => a.model.compareTo(b.model),
-                ),
+              DataTable(
+                sortColumnIndex: _sortColumnIndex,
+                sortAscending: _sortAscending,
+                columns: [
+                  DataColumn(
+                    label: const Text('Car Make'),
+                    onSort: (index, ascending) => _sort(
+                      index,
+                      ascending,
+                      (a, b) => a.carMake.compareTo(b.carMake),
+                    ),
+                  ),
+                  DataColumn(
+                    label: const Text('Model'),
+                    onSort: (index, ascending) => _sort(
+                      index,
+                      ascending,
+                      (a, b) => a.model.compareTo(b.model),
+                    ),
+                  ),
+                  DataColumn(
+                    label: const Text('Price'),
+                    numeric: true,
+                    onSort: (index, ascending) => _sort(
+                      index,
+                      ascending,
+                      (a, b) => a.price.compareTo(b.price),
+                    ),
+                  ),
+                ],
+                rows: [
+                  for (final car in visibleCars)
+                    DataRow(
+                      cells: [
+                        DataCell(Text(car.carMake)),
+                        DataCell(Text(car.model)),
+                        DataCell(Text(car.price.toStringAsFixed(1))),
+                      ],
+                    ),
+                ],
               ),
-              DataColumn(
-                label: const Text('Price'),
-                numeric: true,
-                onSort: (index, ascending) => _sort(
-                  index,
-                  ascending,
-                  (a, b) => a.price.compareTo(b.price),
-                ),
-              ),
-            ],
-            rows: [
-              for (final car in _cars)
-                DataRow(
-                  cells: [
-                    DataCell(Text(car.carMake)),
-                    DataCell(Text(car.model)),
-                    DataCell(Text(car.price.toStringAsFixed(1))),
-                  ],
+              if (visibleCars.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: Text('No cars match your search.'),
                 ),
             ],
           ),
