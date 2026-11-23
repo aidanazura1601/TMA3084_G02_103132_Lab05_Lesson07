@@ -1,1 +1,1 @@
-# TMA3084 Lab 05 Lesson 07 (G02, 103132)
+# TMA3084 Lab 05 Lesson 07 - Group G02
